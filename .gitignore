@@ -1,0 +1,61 @@
+# Ignore Python virtual environments
+venv/
+.venv/
+
+# Ignore compiled Python files
+*.pyc
+*.pyo
+__pycache__/
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore log and debug files
+*.log
+*.bak
+*.swp
+
+# Ignore environment and configuration files
+.env
+.env.*
+*.config
+
+# Ignore build artifacts
+build/
+dist/
+*.spec
+
+# Ignore dependency files
+*.egg-info/
+pip-log.txt
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+*.iml
+
+# Ignore temporary files
+*.tmp
+*.temp
+*.pid
+
+# Ignore archive files
+*.zip
+*.tar.gz
+*.rar
+
+# Ignore miscellaneous files
+*.~*
+*.lock
+*.orig
+*.rej
+
+# Ignore PyInstaller hidden imports cache
+_pyinstaller/
+
+venv/
+sdrive.spec
+sdrive/credentials.py
+credentials.json
+
