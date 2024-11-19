@@ -76,13 +76,6 @@ def build_executable():
     """Build an executable using PyInstaller in the virtual environment."""
     print("Building the executable with PyInstaller...")
     venv_python = get_venv_python()
-
-    # Find the pyfiglet fonts directory to add as data
-    fonts_dir = find_pyfiglet_fonts(venv_python)
-    if fonts_dir is None:
-        print("Pyfiglet fonts directory could not be located. Skipping...")
-        return
-
     try:
         subprocess.run(
             [
@@ -90,7 +83,6 @@ def build_executable():
                 "-m",
                 "PyInstaller",
                 "--onefile",
-                f"--add-data={fonts_dir}{os.pathsep}pyfiglet/fonts",
                 "--name=sdrive",
                 "sdrive/main.py",
             ],
@@ -99,27 +91,6 @@ def build_executable():
         print("Executable built successfully! Check the `dist` folder.")
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while building the executable: {e}")
-
-
-def find_pyfiglet_fonts(venv_python):
-    """Find the pyfiglet fonts folder directory."""
-    try:
-        result = subprocess.run(
-            [venv_python, "-c", "import pyfiglet; print(pyfiglet.__file__)"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        pyfiglet_path = Path(result.stdout.strip()).parent
-        fonts_dir = pyfiglet_path / "fonts"
-        if fonts_dir.exists():
-            return str(fonts_dir)
-        else:
-            print(f"Error: Fonts directory not found in {fonts_dir}")
-            return None
-    except subprocess.CalledProcessError as e:
-        print(f"Error locating pyfiglet fonts: {e}")
-        return None
 
 
 def clean_up():

@@ -4,7 +4,9 @@ from rich.console import Console
 from sdrive.constants import FOLDER_MIME_TYPE
 import re
 from time import sleep
-import pyfiglet
+import sys
+import os
+from sdrive.banner import BANNER
 
 console = Console()
 
@@ -69,11 +71,14 @@ def wait_for_connection(interval=5):
 
 def display_banner():
     """Display a fancy banner with a hidden message."""
-    banner = pyfiglet.figlet_format("SDrive", font="red_phoenix")
+    # Use the imported banner from banner.py
+    banner = BANNER
+    
     tiny_credit = "[dim cyan]Blackhole[/dim cyan]"
+
+    # Display the banner and credit using console
     console.print(f"[bold magenta]{banner}[/bold magenta]")
     console.print(f"\n{' ' * 10}{tiny_credit}\n")
-
 
 def calculate_folder_size(service, folder_id):
     """Recursively calculate the total size and file count of a folder, including nested folders."""
