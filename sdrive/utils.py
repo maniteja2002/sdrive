@@ -73,3 +73,24 @@ def display_banner():
     tiny_credit = "[dim cyan]Blackhole[/dim cyan]"
     console.print(f"[bold magenta]{banner}[/bold magenta]")
     console.print(f"\n{' ' * 10}{tiny_credit}\n")
+
+
+def calculate_folder_size(service, folder_id):
+    """Recursively calculate the total size and file count of a folder, including nested folders."""
+    query = f"'{folder_id}' in parents and trashed=false"
+    results = service.files().list(q=query, fields="files(id, name, mimeType, size)").execute()
+    items = results.get("files", [])
+
+    total_size = 0
+
+    for item in items:
+        mime_type = item["mimeType"]
+        if mime_type == "application/vnd.google-apps.folder":
+            # Recursively process subfolders
+            subfolder_size = calculate_folder_size(service, item["id"])
+            total_size += subfolder_size
+        else:
+            # Add file size and count
+            total_size += int(item.get("size", 0))
+
+    return total_size

@@ -2,7 +2,7 @@ import os
 from time import time
 from rich.console import Console
 from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn, DownloadColumn
-from sdrive.utils import wait_for_connection, format_size
+from sdrive.utils import wait_for_connection, format_size, calculate_folder_size
 import requests
 
 console = Console()
@@ -121,8 +121,9 @@ def download_folder(service, folder_id, folder_name, cumulative_downloaded=0):
         return cumulative_downloaded
 
     # Calculate total size and file count for progress tracking
-    total_size = sum(int(item.get("size", 0)) for item in items if item["mimeType"] != "application/vnd.google-apps.folder")
+    total_size = calculate_folder_size(service, folder_id)
     total_files = len(items)
+
 
     console.log(f"[cyan]Starting download for folder: {folder_name} ({format_size(total_size)})[/cyan]")
 
