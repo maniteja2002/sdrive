@@ -34,7 +34,7 @@ jobs:
 
       - name: Build Binary
         run: |
-          pyinstaller --onefile --name sdrive script.py
+          pyinstaller --onefile --name sdrive sdrive/main.py
         shell: bash
 
       - name: Rename and Organize Binary
