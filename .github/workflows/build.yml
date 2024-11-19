@@ -28,12 +28,13 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install pyinstaller
         shell: bash
 
       - name: Build Binary
         run: |
-          pyinstaller --onefile --name sdrive sdrive/main.py
+          pyinstaller --onefile --name sdrive script.py
         shell: bash
 
       - name: Rename and Organize Binary
@@ -42,11 +43,16 @@ jobs:
           mv dist/sdrive dist/${{ matrix.platform }}_${{ matrix.arch }}/sdrive${{ matrix.platform == 'windows-latest' && '.exe' || '' }}
         shell: bash
 
-      - name: Create Zip File
+      - name: Create Zip File (Linux/macOS)
+        if: ${{ matrix.platform != 'windows-latest' }}
         run: |
           cd dist
           zip -r ${{ matrix.platform }}_${{ matrix.arch }}.zip ${{ matrix.platform }}_${{ matrix.arch }}
-        shell: bash
+
+      - name: Create Zip File (Windows)
+        if: ${{ matrix.platform == 'windows-latest' }}
+        run: |
+          powershell Compress-Archive -Path dist\${{ matrix.platform }}_${{ matrix.arch }}\* -DestinationPath dist\${{ matrix.platform }}_${{ matrix.arch }}.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
