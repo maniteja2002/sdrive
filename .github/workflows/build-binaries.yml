@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.11] # Specify supported Python versions
+        python-version: [3.11]
         architecture: [x64, arm64]
     runs-on: ${{ matrix.os }}
 
@@ -37,13 +37,22 @@ jobs:
     # Build the executable with PyInstaller
     - name: Build executable
       run: |
-        python -m PyInstaller --onefile \
-          --name sdrive_${{ matrix.os }}_${{ matrix.architecture }} \
-          sdrive/main.py
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          python -m PyInstaller --onefile `
+            --name sdrive_${{ matrix.os }}_${{ matrix.architecture }} `
+            sdrive/main.py
+        else
+          python -m PyInstaller --onefile \
+            --name sdrive_${{ matrix.os }}_${{ matrix.architecture }} \
+            sdrive/main.py
 
-    # Upload the artifact
+    # Debugging: List the dist folder contents
+    - name: List dist contents
+      run: ls -la dist
+
+    # Upload the binary as an artifact
     - name: Upload binary
       uses: actions/upload-artifact@v3
       with:
         name: sdrive-${{ matrix.os }}-${{ matrix.architecture }}
-        path: dist/
+        path: dist/*.*
