@@ -1,0 +1,97 @@
+name: sdrive
+description: Build configuration for SDrive project to create cross-platform binaries.
+
+builds:
+  - name: windows_x64
+    platform: windows
+    arch: x64
+    output: dist/windows_x64/sdrive
+    zip: true
+
+  - name: windows_arm
+    platform: windows
+    arch: arm64
+    output: dist/windows_arm/sdrive
+    zip: true
+
+  - name: linux_x64
+    platform: linux
+    arch: x64
+    output: dist/linux_x64/sdrive
+    zip: true
+
+  - name: linux_arm
+    platform: linux
+    arch: arm64
+    output: dist/linux_arm/sdrive
+    zip: true
+
+  - name: macos_x64
+    platform: mac
+    arch: x64
+    output: dist/macos_x64/sdrive
+    zip: true
+
+  - name: macos_arm
+    platform: mac
+    arch: arm64
+    output: dist/macos_arm/sdrive
+    zip: true
+
+python_version: 3.11
+
+dependencies:
+  - pyinstaller
+
+commands:
+  - name: install_dependencies
+    command: pip install -r requirements.txt
+
+  - name: build
+    command: pyinstaller --onefile --name sdrive sdrive/main.py
+
+steps:
+  - name: Prepare Environment
+    run: install_dependencies
+
+  - name: Build Windows x64
+    run: build
+    platform: windows
+    arch: x64
+    output_folder: dist/windows_x64
+    zip_output: dist/windows_x64.zip
+
+  - name: Build Windows ARM
+    run: build
+    platform: windows
+    arch: arm64
+    output_folder: dist/windows_arm
+    zip_output: dist/windows_arm.zip
+
+  - name: Build Linux x64
+    run: build
+    platform: linux
+    arch: x64
+    output_folder: dist/linux_x64
+    zip_output: dist/linux_x64.zip
+
+  - name: Build Linux ARM
+    run: build
+    platform: linux
+    arch: arm64
+    output_folder: dist/linux_arm
+    zip_output: dist/linux_arm.zip
+
+  - name: Build macOS x64
+    run: build
+    platform: mac
+    arch: x64
+    output_folder: dist/macos_x64
+    zip_output: dist/macos_x64.zip
+
+  - name: Build macOS ARM
+    run: build
+    platform: mac
+    arch: arm64
+    output_folder: dist/macos_arm
+    zip_output: dist/macos_arm.zip
