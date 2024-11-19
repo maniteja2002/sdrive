@@ -1,97 +1,55 @@
-name: sdrive
-description: Build configuration for SDrive project to create cross-platform binaries.
+name: Build SDrive
 
-builds:
-  - name: windows_x64
-    platform: windows
-    arch: x64
-    output: dist/windows_x64/sdrive
-    zip: true
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
-  - name: windows_arm
-    platform: windows
-    arch: arm64
-    output: dist/windows_arm/sdrive
-    zip: true
+jobs:
+  build:
+    name: Build Binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [windows, macos, linux]
+        arch: [x64, arm64]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-  - name: linux_x64
-    platform: linux
-    arch: x64
-    output: dist/linux_x64/sdrive
-    zip: true
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
 
-  - name: linux_arm
-    platform: linux
-    arch: arm64
-    output: dist/linux_arm/sdrive
-    zip: true
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
 
-  - name: macos_x64
-    platform: mac
-    arch: x64
-    output: dist/macos_x64/sdrive
-    zip: true
+      - name: Build Binary
+        run: |
+          pyinstaller --onefile --name sdrive script.py
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          ARCH: ${{ matrix.arch }}
 
-  - name: macos_arm
-    platform: mac
-    arch: arm64
-    output: dist/macos_arm/sdrive
-    zip: true
+      - name: Rename and Organize Binary
+        run: |
+          mkdir -p dist/${{ matrix.platform }}_${{ matrix.arch }}
+          mv dist/sdrive dist/${{ matrix.platform }}_${{ matrix.arch }}/sdrive${{ matrix.platform == 'windows' && '.exe' || '' }}
 
-python_version: 3.11
+      - name: Create Zip File
+        run: |
+          cd dist
+          zip -r ${{ matrix.platform }}_${{ matrix.arch }}.zip ${{ matrix.platform }}_${{ matrix.arch }}
 
-dependencies:
-  - pyinstaller
-
-commands:
-  - name: install_dependencies
-    command: pip install -r requirements.txt
-
-  - name: build
-    command: pyinstaller --onefile --name sdrive sdrive/main.py
-
-steps:
-  - name: Prepare Environment
-    run: install_dependencies
-
-  - name: Build Windows x64
-    run: build
-    platform: windows
-    arch: x64
-    output_folder: dist/windows_x64
-    zip_output: dist/windows_x64.zip
-
-  - name: Build Windows ARM
-    run: build
-    platform: windows
-    arch: arm64
-    output_folder: dist/windows_arm
-    zip_output: dist/windows_arm.zip
-
-  - name: Build Linux x64
-    run: build
-    platform: linux
-    arch: x64
-    output_folder: dist/linux_x64
-    zip_output: dist/linux_x64.zip
-
-  - name: Build Linux ARM
-    run: build
-    platform: linux
-    arch: arm64
-    output_folder: dist/linux_arm
-    zip_output: dist/linux_arm.zip
-
-  - name: Build macOS x64
-    run: build
-    platform: mac
-    arch: x64
-    output_folder: dist/macos_x64
-    zip_output: dist/macos_x64.zip
-
-  - name: Build macOS ARM
-    run: build
-    platform: mac
-    arch: arm64
-    output_folder: dist/macos_arm
-    zip_output: dist/macos_arm.zip
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.platform }}_${{ matrix.arch }}
+          path: dist/${{ matrix.platform }}_${{ matrix.arch }}.zip
