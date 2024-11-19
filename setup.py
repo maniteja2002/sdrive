@@ -13,7 +13,8 @@ def get_venv_python():
 def create_virtual_environment():
     """Create a virtual environment."""
     print("Creating a virtual environment...")
-    subprocess.run(["python3", "-m", "venv", "venv"], check=True)
+    python_command = input("what is your device python command eg:python or python3 :")
+    subprocess.run([python_command, "-m", "venv", "venv"], check=True)
     print("Virtual environment created successfully!")
 
 
