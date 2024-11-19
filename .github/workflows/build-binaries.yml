@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.11]
+        python-version: [3.11]  # Use a single Python version
         architecture: [x64, arm64]
     runs-on: ${{ matrix.os }}
 
@@ -46,13 +46,9 @@ jobs:
             --name sdrive_${{ matrix.os }}_${{ matrix.architecture }} \
             sdrive/main.py
 
-    # Debugging: List the dist folder contents
-    - name: List dist contents
-      run: ls -la dist
-
-    # Upload the binary as an artifact
+    # Upload the artifact
     - name: Upload binary
       uses: actions/upload-artifact@v3
       with:
         name: sdrive-${{ matrix.os }}-${{ matrix.architecture }}
-        path: dist/*.*
+        path: dist/
