@@ -59,3 +59,4 @@ sdrive.spec
 sdrive/credentials.py
 credentials.json
 token.pickle
+structure.py
