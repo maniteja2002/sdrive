@@ -4,16 +4,16 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from pathlib import Path
+
 try:
     from sdrive.credentials import CLIENT_CONFIG  # Import CLIENT_CONFIG if available
 except ImportError:
     CLIENT_CONFIG = None
 
-
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 def authenticate_google_drive():
-    """Authenticate with Google Drive using sdrive.credentials or credentials.json."""
+    """Authenticate with Google Drive, handling expired tokens and missing credentials."""
     creds = None
     token_file = 'token.pickle'
     credentials_file = Path("credentials.json")
@@ -23,13 +23,18 @@ def authenticate_google_drive():
         with open(token_file, 'rb') as token:
             creds = pickle.load(token)
 
-    # If no valid creds, refresh or start a new authentication flow
+    # Refresh or request new authentication if necessary
     if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            # Use CLIENT_CONFIG if sdrive.credentials exists
-            if CLIENT_CONFIG:
+        try:
+            # Attempt to refresh the token if it is expired and has a refresh token
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                raise Exception("No valid or refreshable token available.")
+        except Exception as e:
+            # Fallback to new authentication flow
+            print(f"[INFO] Authentication required: {e}")
+            if CLIENT_CONFIG:  # Use CLIENT_CONFIG if available
                 flow = InstalledAppFlow.from_client_config(CLIENT_CONFIG, SCOPES)
             elif credentials_file.exists():  # Fallback to credentials.json
                 flow = InstalledAppFlow.from_client_secrets_file(str(credentials_file), SCOPES)
