@@ -7,6 +7,37 @@ import requests
 
 console = Console()
 
+def calculate_folder_size(service, folder_id):
+    """Calculate the total size of a folder, including all nested folders."""
+    total_size = 0
+    query = f"'{folder_id}' in parents and trashed=false"
+    page_token = None
+
+    while True:
+        # Paginate through the files in the folder
+        results = service.files().list(
+            q=query,
+            fields="nextPageToken, files(id, mimeType, size)",
+            pageToken=page_token,
+        ).execute()
+
+        items = results.get("files", [])
+        for item in items:
+            mime_type = item.get("mimeType")
+            if mime_type == "application/vnd.google-apps.folder":
+                # Recursively calculate the size of nested folders
+                total_size += calculate_folder_size(service, item["id"])
+            else:
+                # Add file size to the total
+                size = int(item.get("size", 0))  # Default to 0 if size is missing
+                total_size += size
+
+        # Check if there are more pages of results
+        page_token = results.get("nextPageToken")
+        if not page_token:
+            break
+
+    return total_size
 
 def download_file(service, file_id, file_name, cumulative_downloaded=0, folder_total_size=None, folder_file_count=None, current_file_index=None):
     """Download a file with progress tracking, including retry logic and download speed."""
@@ -37,8 +68,8 @@ def download_file(service, file_id, file_name, cumulative_downloaded=0, folder_t
 
             if existing_size:
                 console.log(f"[cyan]Resuming download of {file_name} from {format_size(existing_size)}.[/cyan]")
-            else : console.log(f"[cyan]downloading {file_name} {format_size(total_size)}")
-            
+            else:
+                console.log(f"[cyan]Downloading {file_name} ({format_size(total_size)})[/cyan]")
 
             # Start or resume download
             url = f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media"
@@ -106,28 +137,40 @@ def download_file(service, file_id, file_name, cumulative_downloaded=0, folder_t
     console.log(f"[red]Failed to download {file_name} after {retry_attempts} attempts.[/red]")
     return cumulative_downloaded
 
-
-
-
 def download_folder(service, folder_id, folder_name, cumulative_downloaded=0):
     """Download all files and subfolders from a folder recursively with folder-level progress."""
     os.makedirs(folder_name, exist_ok=True)
     query = f"'{folder_id}' in parents and trashed=false"
-    results = service.files().list(q=query, fields="files(id, name, mimeType, size)").execute()
-    items = results.get("files", [])
+    page_token = None
 
-    if not items:
+    all_items = []
+
+    while True:
+        # Add pagination support with `pageToken`
+        results = service.files().list(
+            q=query,
+            fields="nextPageToken, files(id, name, mimeType, size)",
+            pageToken=page_token,
+        ).execute()
+
+        items = results.get("files", [])
+        all_items.extend(items)
+
+        page_token = results.get("nextPageToken")
+        if not page_token:
+            break
+
+    if not all_items:
         console.print(f"[yellow]The folder {folder_name} is empty.[/yellow]")
         return cumulative_downloaded
 
     # Calculate total size and file count for progress tracking
     total_size = calculate_folder_size(service, folder_id)
-    total_files = len(items)
-
+    total_files = len(all_items)
 
     console.log(f"[cyan]Starting download for folder: {folder_name} ({format_size(total_size)})[/cyan]")
 
-    for index, item in enumerate(items, start=1):
+    for index, item in enumerate(all_items, start=1):
         item_name = item["name"]
         item_id = item["id"]
         mime_type = item["mimeType"]
@@ -144,4 +187,3 @@ def download_folder(service, folder_id, folder_name, cumulative_downloaded=0):
 
     console.log(f"[cyan]Folder: {folder_name}[/cyan] - [green]Total downloaded: {format_size(total_size)}[/green]")
     return cumulative_downloaded
-
