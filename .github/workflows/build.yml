@@ -53,7 +53,7 @@ jobs:
       - name: Create Zip File (Windows)
         if: ${{ matrix.platform == 'windows-latest' }}
         run: |
-          powershell Compress-Archive -Path dist\${{ matrix.platform }}_${{ matrix.arch }}\* -DestinationPath dist\${{ matrix.platform }}_${{ matrix.arch }}.zip
+          powershell Compress-Archive -Path dist\${{ matrix.platform }}_${{ matrix.arch }} -DestinationPath dist\${{ matrix.platform }}_${{ matrix.arch }}.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
