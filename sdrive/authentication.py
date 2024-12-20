@@ -5,11 +5,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from pathlib import Path
 
-try:
-    from sdrive.credentials import CLIENT_CONFIG  # Import CLIENT_CONFIG if available
-except ImportError:
-    CLIENT_CONFIG = None
-
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 def authenticate_google_drive():
@@ -34,13 +29,11 @@ def authenticate_google_drive():
         except Exception as e:
             # Fallback to new authentication flow
             print(f"[INFO] Authentication required: {e}")
-            if CLIENT_CONFIG:  # Use CLIENT_CONFIG if available
-                flow = InstalledAppFlow.from_client_config(CLIENT_CONFIG, SCOPES)
-            elif credentials_file.exists():  # Fallback to credentials.json
+            if credentials_file.exists():  # Fallback to credentials.json
                 flow = InstalledAppFlow.from_client_secrets_file(str(credentials_file), SCOPES)
             else:
                 raise FileNotFoundError(
-                    "No valid credentials found. Ensure `sdrive.credentials` or `credentials.json` exists."
+                    "No valid credentials found. Ensure `credentials.json` exists."
                 )
 
             creds = flow.run_local_server(port=0)

@@ -9,13 +9,42 @@ def get_venv_python():
     """Get the Python interpreter path from the virtual environment."""
     return os.path.join("venv", "Scripts", "python.exe") if os.name == "nt" else os.path.join("venv", "bin", "python")
 
+def detect_python_command():
+    """Detect the working Python command on the user's device."""
+    possible_commands = [
+        "python", "python3", "python3.11", "python3.10", "python3.9", "python3.8", 
+        "py"  # Common on Windows
+    ]
+    for command in possible_commands:
+        try:
+            result = subprocess.run([command, "--version"], capture_output=True, text=True)
+            if result.returncode == 0:
+                print(f"Detected Python command: {command} ({result.stdout.strip()})")
+                return command
+        except FileNotFoundError:
+            continue
+
+    fallback = input("No Python command detected. Please provide your Python command (e.g., python3.9): ").strip()
+    try:
+        result = subprocess.run([fallback, "--version"], capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"Using provided Python command: {fallback} ({result.stdout.strip()})")
+            return fallback
+    except FileNotFoundError:
+        pass
+
+    raise EnvironmentError("No suitable Python interpreter found. Please install Python and try again.")
+
 
 def create_virtual_environment():
-    """Create a virtual environment."""
+    """Create a virtual environment using the detected Python command."""
     print("Creating a virtual environment...")
-    python_command = input("what is your device python command eg:python or python3 :")
-    subprocess.run([python_command, "-m", "venv", "venv"], check=True)
-    print("Virtual environment created successfully!")
+    python_command = detect_python_command()
+    try:
+        subprocess.run([python_command, "-m", "venv", "venv"], check=True)
+        print("Virtual environment created successfully!")
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred while creating the virtual environment: {e}")
 
 
 def install_requirements_in_venv():
@@ -28,48 +57,6 @@ def install_requirements_in_venv():
         print("Requirements installed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while installing requirements: {e}")
-
-
-def read_and_generate_credentials():
-    """Read `credentials.json` and create `credentials.py` with the required structure."""
-    credentials_path = Path("credentials.json")
-    if not credentials_path.exists():
-        print("Error: `credentials.json` not found. Please provide the file and try again.")
-        return
-
-    try:
-        with credentials_path.open("r") as f:
-            credentials_data = json.load(f)
-
-        # Extract required fields
-        client_id = credentials_data["installed"]["client_id"]
-        project_id = credentials_data["installed"]["project_id"]
-        client_secret = credentials_data["installed"]["client_secret"]
-
-        # Generate credentials.py
-        credentials_py_content = f'''CLIENT_CONFIG = {{
-    "installed": {{
-        "client_id": "{client_id}",
-        "project_id": "{project_id}",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret": "{client_secret}",
-        "redirect_uris": [
-            "http://localhost"
-        ]
-    }}
-}}
-'''
-        credentials_py_path = Path("sdrive/credentials.py")
-        with credentials_py_path.open("w") as f:
-            f.write(credentials_py_content)
-
-        print("Generated `credentials.py` successfully!")
-    except KeyError as e:
-        print(f"Error: Missing key in `credentials.json`: {e}")
-    except json.JSONDecodeError:
-        print("Error: Failed to parse `credentials.json`. Ensure it's a valid JSON file.")
 
 
 def build_executable():
@@ -112,7 +99,6 @@ def main():
     print("Starting setup...")
     create_virtual_environment()
     install_requirements_in_venv()
-    read_and_generate_credentials()
     build_executable()
     print("Setup complete! You're ready to go!")
 

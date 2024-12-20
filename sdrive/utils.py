@@ -4,8 +4,6 @@ from rich.console import Console
 from sdrive.constants import FOLDER_MIME_TYPE
 import re
 from time import sleep
-import sys
-import os
 from sdrive.banner import BANNER
 
 console = Console()
@@ -81,21 +79,33 @@ def display_banner():
     console.print(f"\n{' ' * 10}{tiny_credit}\n")
 
 def calculate_folder_size(service, folder_id):
-    """Recursively calculate the total size and file count of a folder, including nested folders."""
-    query = f"'{folder_id}' in parents and trashed=false"
-    results = service.files().list(q=query, fields="files(id, name, mimeType, size)").execute()
-    items = results.get("files", [])
-
+    """Calculate the total size of a folder, including all nested folders."""
     total_size = 0
+    query = f"'{folder_id}' in parents and trashed=false"
+    page_token = None
 
-    for item in items:
-        mime_type = item["mimeType"]
-        if mime_type == "application/vnd.google-apps.folder":
-            # Recursively process subfolders
-            subfolder_size = calculate_folder_size(service, item["id"])
-            total_size += subfolder_size
-        else:
-            # Add file size and count
-            total_size += int(item.get("size", 0))
+    while True:
+        # Paginate through the files in the folder
+        results = service.files().list(
+            q=query,
+            fields="nextPageToken, files(id, mimeType, size)",
+            pageToken=page_token,
+        ).execute()
+
+        items = results.get("files", [])
+        for item in items:
+            mime_type = item.get("mimeType")
+            if mime_type == "application/vnd.google-apps.folder":
+                # Recursively calculate the size of nested folders
+                total_size += calculate_folder_size(service, item["id"])
+            else:
+                # Add file size to the total
+                size = int(item.get("size", 0))  # Default to 0 if size is missing
+                total_size += size
+
+        # Check if there are more pages of results
+        page_token = results.get("nextPageToken")
+        if not page_token:
+            break
 
     return total_size

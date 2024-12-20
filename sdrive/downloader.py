@@ -7,38 +7,6 @@ import requests
 
 console = Console()
 
-def calculate_folder_size(service, folder_id):
-    """Calculate the total size of a folder, including all nested folders."""
-    total_size = 0
-    query = f"'{folder_id}' in parents and trashed=false"
-    page_token = None
-
-    while True:
-        # Paginate through the files in the folder
-        results = service.files().list(
-            q=query,
-            fields="nextPageToken, files(id, mimeType, size)",
-            pageToken=page_token,
-        ).execute()
-
-        items = results.get("files", [])
-        for item in items:
-            mime_type = item.get("mimeType")
-            if mime_type == "application/vnd.google-apps.folder":
-                # Recursively calculate the size of nested folders
-                total_size += calculate_folder_size(service, item["id"])
-            else:
-                # Add file size to the total
-                size = int(item.get("size", 0))  # Default to 0 if size is missing
-                total_size += size
-
-        # Check if there are more pages of results
-        page_token = results.get("nextPageToken")
-        if not page_token:
-            break
-
-    return total_size
-
 def download_file(service, file_id, file_name, cumulative_downloaded=0, folder_total_size=None, folder_file_count=None, current_file_index=None):
     """Download a file with progress tracking, including retry logic and download speed."""
     retry_attempts = 10
@@ -165,6 +133,7 @@ def download_folder(service, folder_id, folder_name, cumulative_downloaded=0):
         return cumulative_downloaded
 
     # Calculate total size and file count for progress tracking
+    console.log(f"[green]calculating the folder - {folder_name} size...[/green]")
     total_size = calculate_folder_size(service, folder_id)
     total_files = len(all_items)
 
