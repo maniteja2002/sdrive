@@ -41,5 +41,5 @@ def authenticate_google_drive():
         # Save credentials to token.pickle for reuse
         with open(token_file, 'wb') as token:
             pickle.dump(creds, token)
-
-    return build('drive', 'v3', credentials=creds)
+    service = build('drive', 'v3', credentials=creds)
+    return service
