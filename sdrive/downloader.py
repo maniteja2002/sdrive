@@ -133,13 +133,14 @@ def download_folder(service, folder_id, folder_name, cumulative_downloaded=0):
         return cumulative_downloaded
 
     # Calculate total size and file count for progress tracking
-    console.log(f"[green]calculating the folder - {folder_name} size...[/green]")
+    console.log(f"[green]Calculating the folder - {folder_name} size...[/green]")
     total_size = calculate_folder_size(service, folder_id)
     total_files = len(all_items)
 
     console.log(f"[cyan]Starting download for folder: {folder_name} ({format_size(total_size)})[/cyan]")
 
-    for index, item in enumerate(all_items, start=1):
+    # Reverse the order of items
+    for index, item in enumerate(reversed(all_items), start=1):
         item_name = item["name"]
         item_id = item["id"]
         mime_type = item["mimeType"]
